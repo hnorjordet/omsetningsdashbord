@@ -406,43 +406,27 @@
         </section>
     </div>
 
-    <button class="edit-toggle" onclick="toggleEdit()">✏️ Rediger Data</button>
-    
-    <div class="edit-mode" id="editMode">
-        <h3 style="margin-bottom: 16px; color: #f3f4f6;">Rediger Månedlige Tall</h3>
-        <div id="editInputs"></div>
-        <button onclick="updateData()" style="width: 100%; background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; margin-top: 16px; cursor: pointer;">Oppdater Dashboard</button>
-    </div>
-
     <script>
         // ==============================
-        // NOTION API CONFIGURATION
+        // 📝 MONTHLY UPDATE - EDIT HERE!
         // ==============================
-        const NOTION_CONFIG = {
-            // UPDATE THESE VALUES:
-            databaseId: '241d3b80-905c-809f-b3d1-000b65f1d57b', // ✅ Your database ID  
-            token: 'secret_ntn_568328561569u45Y2kwgQCnf6lB5HSC3O1442AnzCJN5xi'  // ✅ Your integration token
+        // Just change the current month's 0 to your actual revenue amount
+        const revenueData = {
+            januar: 27910,      // ✅ 27,910 kr
+            februar: 65056,     // ✅ 65,056 kr  
+            mars: 15153,        // ✅ 15,153 kr
+            april: 54972,       // ✅ 54,972 kr
+            mai: 42775,         // ✅ 42,775 kr
+            juni: 102458,       // ✅ 102,458 kr
+            juli: 25671,        // ✅ 25,671 kr
+            august: 0,          // 🔄 ADD AUGUST REVENUE HERE
+            september: 0,       // 🔄 ADD SEPTEMBER REVENUE HERE  
+            oktober: 0,         // 🔄 ADD OCTOBER REVENUE HERE
+            november: 0,        // 🔄 ADD NOVEMBER REVENUE HERE
+            desember: 0         // 🔄 ADD DECEMBER REVENUE HERE
         };
 
-        // ==============================
-        // FALLBACK DATA FOR TESTING
-        // ==============================
-        const fallbackData = {
-            januar: 87500,
-            februar: 92300,
-            mars: 78900,
-            april: 105400,
-            mai: 88750,
-            juni: 96200,
-            juli: 112800,
-            august: 71500,
-            september: 0,      // Placeholder for future months
-            oktober: 0,
-            november: 0,
-            desember: 0
-        };
-
-        const monthlyGoal = 80000;  // Your monthly target
+        const monthlyGoal = 40000;  // Your monthly target
         const yearlyGoal = monthlyGoal * 12;
 
         // Month names and data
@@ -733,7 +717,7 @@
             return revenueData;
         }
 
-        function renderDashboard(revenueData) {
+        function renderDashboard() {
             renderOverviewStats(revenueData);
             renderMonths(revenueData);
             renderQuarters(revenueData);
@@ -741,26 +725,9 @@
         }
 
         // Initialize dashboard
-        async function initDashboard() {
-            let revenueData = null;
-
-            // Try to fetch from Notion first
-            if (NOTION_CONFIG.databaseId !== 'YOUR_NOTION_DATABASE_ID_HERE' && 
-                NOTION_CONFIG.token !== 'YOUR_NOTION_INTEGRATION_TOKEN_HERE') {
-                revenueData = await fetchNotionData();
-            }
-
-            // Fall back to test data if Notion fails
-            if (!revenueData) {
-                console.log('Using fallback data for demonstration');
-                revenueData = fallbackData;
-            }
-
-            renderDashboard(revenueData);
-        }
-
-        // Start the app
-        document.addEventListener('DOMContentLoaded', initDashboard);
+        document.addEventListener('DOMContentLoaded', function() {
+            renderDashboard();
+        });
     </script>
 </body>
 </html>

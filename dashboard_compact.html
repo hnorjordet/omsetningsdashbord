@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+        function showDashboard() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+        }<!DOCTYPE html>
 <html lang="no">
 <head>
     <meta charset="UTF-8">
@@ -281,33 +285,25 @@
 
     <script>
         // ==============================
-        // NOTION API CONFIGURATION  
+        // 📝 MONTHLY UPDATE - EDIT HERE!
         // ==============================
-        const NOTION_CONFIG = {
-            // UPDATE THESE VALUES:
-            databaseId: '241d3b80-905c-809f-b3d1-000b65f1d57b', // ✅ Your database ID
-            token: 'secret_ntn_568328561569u45Y2kwgQCnf6lB5HSC3O1442AnzCJN5xi'  // ✅ Your integration token
+        // Just change the current month's 0 to your actual revenue amount
+        const revenueData = {
+            januar: 27910,      // ✅ 27,910 kr
+            februar: 65056,     // ✅ 65,056 kr  
+            mars: 15153,        // ✅ 15,153 kr
+            april: 54972,       // ✅ 54,972 kr
+            mai: 42775,         // ✅ 42,775 kr
+            juni: 102458,       // ✅ 102,458 kr
+            juli: 25671,        // ✅ 25,671 kr
+            august: 0,          // 🔄 ADD AUGUST REVENUE HERE
+            september: 0,       // 🔄 ADD SEPTEMBER REVENUE HERE  
+            oktober: 0,         // 🔄 ADD OCTOBER REVENUE HERE
+            november: 0,        // 🔄 ADD NOVEMBER REVENUE HERE
+            desember: 0         // 🔄 ADD DECEMBER REVENUE HERE
         };
 
-        // ==============================
-        // FALLBACK DATA FOR TESTING
-        // ==============================
-        const fallbackData = {
-            januar: 87500,
-            februar: 92300,
-            mars: 78900,
-            april: 105400,
-            mai: 88750,
-            juni: 96200,
-            juli: 112800,
-            august: 71500,
-            september: 0,
-            oktober: 0,
-            november: 0,
-            desember: 0
-        };
-
-        const monthlyGoal = 80000;
+        const monthlyGoal = 40000;  // Your monthly target  
         const yearlyGoal = monthlyGoal * 12;
 
         const months = [
@@ -345,51 +341,6 @@
             if (percentage >= 90) return { class: 'status-good', label: 'Bra', percentage };
             if (percentage >= 70) return { class: 'status-fair', label: 'OK', percentage };
             return { class: 'status-poor', label: 'Under mål', percentage };
-        }
-
-        // Notion API functions
-        async function fetchNotionData() {
-            try {
-                const response = await fetch(`https://api.notion.com/v1/databases/${NOTION_CONFIG.databaseId}/query`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${NOTION_CONFIG.token}`,
-                        'Content-Type': 'application/json',
-                        'Notion-Version': '2022-06-28'
-                    },
-                    body: JSON.stringify({})
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                return parseNotionData(data);
-            } catch (error) {
-                console.error('Error fetching Notion data:', error);
-                return null;
-            }
-        }
-
-        function parseNotionData(notionResponse) {
-            const revenueData = {};
-            
-            notionResponse.results.forEach(page => {
-                const monthProperty = page.properties['Måned'] || page.properties['Month'];
-                const revenueProperty = page.properties['Omsetning'] || page.properties['Revenue'];
-                
-                if (monthProperty && revenueProperty) {
-                    const month = monthProperty.title[0]?.text?.content?.toLowerCase();
-                    const revenue = revenueProperty.number || 0;
-                    
-                    if (month && months.includes(month)) {
-                        revenueData[month] = revenue;
-                    }
-                }
-            });
-
-            return revenueData;
         }
 
         function calculateQuarterlyStats(revenueData) {
@@ -484,40 +435,11 @@
             document.getElementById('lastUpdated').textContent = new Date().toLocaleString('nb-NO');
         }
 
-        function showError() {
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('errorState').style.display = 'block';
-            document.getElementById('dashboardContent').style.display = 'none';
-        }
-
-        function showDashboard() {
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('errorState').style.display = 'none';
-            document.getElementById('dashboardContent').style.display = 'block';
-        }
-
         // Initialize dashboard
-        async function initDashboard() {
-            let revenueData = null;
-
-            // Try to fetch from Notion first
-            if (NOTION_CONFIG.databaseId !== 'YOUR_NOTION_DATABASE_ID_HERE' && 
-                NOTION_CONFIG.token !== 'YOUR_NOTION_INTEGRATION_TOKEN_HERE') {
-                revenueData = await fetchNotionData();
-            }
-
-            // Fall back to test data if Notion fails
-            if (!revenueData) {
-                console.log('Using fallback data for demonstration');
-                revenueData = fallbackData;
-            }
-
+        document.addEventListener('DOMContentLoaded', function() {
             renderQuarterlyDashboard(revenueData);
             showDashboard();
-        }
-
-        // Start the app
-        document.addEventListener('DOMContentLoaded', initDashboard);
+        });
     </script>
 </body>
 </html>
