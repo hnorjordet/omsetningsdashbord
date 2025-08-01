@@ -1,8 +1,4 @@
-        function showDashboard() {
-            document.getElementById('loadingState').style.display = 'none';
-            document.getElementById('errorState').style.display = 'none';
-            document.getElementById('dashboardContent').style.display = 'block';
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="no">
 <head>
     <meta charset="UTF-8">
@@ -207,21 +203,6 @@
             margin-top: 20px;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #9ca3af;
-        }
-
-        .error {
-            text-align: center;
-            padding: 40px;
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
         @media (max-width: 768px) {
             .quarters-grid {
                 grid-template-columns: 1fr;
@@ -244,43 +225,32 @@
             <p class="subtitle">Kompakt visning av omsetning per kvartal</p>
         </header>
 
-        <div id="loadingState" class="loading">
-            <div>🔄 Laster data fra Notion...</div>
-        </div>
+        <section class="quick-stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Omsetning</div>
+                <div class="stat-value" id="totalRevenue">0 kr</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Måloppnåelse</div>
+                <div class="stat-value" id="goalProgress">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Beste Kvartal</div>
+                <div class="stat-value" id="bestQuarter">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Gjennomsnitt</div>
+                <div class="stat-value" id="avgQuarter">0 kr</div>
+            </div>
+        </section>
 
-        <div id="errorState" class="error" style="display: none;">
-            <div>❌ Kunne ikke laste data. Sjekk Notion-tilkobling.</div>
-        </div>
+        <section class="quarters-grid" id="quartersGrid">
+            <!-- Quarters will be populated by JavaScript -->
+        </section>
 
-        <div id="dashboardContent" style="display: none;">
-            <section class="quick-stats">
-                <div class="stat-card">
-                    <div class="stat-label">Total Omsetning</div>
-                    <div class="stat-value" id="totalRevenue">0 kr</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Måloppnåelse</div>
-                    <div class="stat-value" id="goalProgress">0%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Beste Kvartal</div>
-                    <div class="stat-value" id="bestQuarter">-</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Gjennomsnitt</div>
-                    <div class="stat-value" id="avgQuarter">0 kr</div>
-                </div>
-            </section>
-
-            <section class="quarters-grid" id="quartersGrid">
-                <!-- Quarters will be populated by JavaScript -->
-            </section>
-
-            <footer class="footer">
-                Sist oppdatert: <span id="lastUpdated">-</span> • 
-                Data hentet fra Notion
-            </footer>
-        </div>
+        <footer class="footer">
+            Sist oppdatert: <span id="lastUpdated">-</span> • Data oppdateres manuelt
+        </footer>
     </div>
 
     <script>
@@ -438,7 +408,6 @@
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             renderQuarterlyDashboard(revenueData);
-            showDashboard();
         });
     </script>
 </body>
