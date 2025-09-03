@@ -41,6 +41,22 @@
             color: #9ca3af;
         }
 
+        .loading {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #9ca3af;
+            margin: 40px 0;
+        }
+
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
         .quick-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -201,6 +217,9 @@
             font-size: 0.8rem;
             color: #6b7280;
             margin-top: 20px;
+            padding: 10px;
+            background: rgba(30, 30, 30, 0.5);
+            border-radius: 8px;
         }
 
         @media (max-width: 768px) {
@@ -225,7 +244,10 @@
             <p class="subtitle">Kompakt visning av omsetning per kvartal</p>
         </header>
 
-        <section class="quick-stats">
+        <div id="loadingMessage" class="loading">Laster data...</div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <section class="quick-stats" id="quickStats" style="display: none;">
             <div class="stat-card">
                 <div class="stat-label">Total omsetning</div>
                 <div class="stat-value" id="totalRevenue">0 kr</div>
@@ -244,37 +266,44 @@
             </div>
         </section>
 
-        <section class="quarters-grid" id="quartersGrid">
+        <section class="quarters-grid" id="quartersGrid" style="display: none;">
             <!-- Quarters will be populated by JavaScript -->
         </section>
 
         <footer class="footer">
-            Sist oppdatert: <span id="lastUpdated">-</span> • Data oppdateres manuelt
+            Data hentet fra: <span id="dataSourceUrl">JSON fil</span> | 
+            Sist oppdatert: <span id="lastUpdated">-</span>
         </footer>
     </div>
 
     <script>
         // ==============================
-        // 📝 MONTHLY UPDATE - EDIT HERE!
+        // 🔗 DATA SOURCE CONFIGURATION
         // ==============================
-        // Just change the current month's 0 to your actual revenue amount
-        const revenueData = {
-            januar: 27910,      // ✅ 27,910 kr
-            februar: 65056,     // ✅ 65,056 kr  
-            mars: 15153,        // ✅ 15,153 kr
-            april: 54972,       // ✅ 54,972 kr
-            mai: 42775,         // ✅ 42,775 kr
-            juni: 102458,       // ✅ 102,458 kr
-            juli: 36787.68,     // ✅ 25,671 kr
-            august: 0,          // 🔄 ADD AUGUST REVENUE HERE
-            september: 0,       // 🔄 ADD SEPTEMBER REVENUE HERE  
-            oktober: 0,         // 🔄 ADD OCTOBER REVENUE HERE
-            november: 0,        // 🔄 ADD NOVEMBER REVENUE HERE
-            desember: 0         // 🔄 ADD DECEMBER REVENUE HERE
+        // Replace this URL with your public JSON file URL from Proton Drive or Google Drive
+        const DATA_SOURCE_URL = 'https://drive.proton.me/urls/RCCD9TFEMG#c7xP4mnQIv8w';
+        
+        // Fallback data in case the JSON file can't be loaded
+        const fallbackData = {
+            januar: 27910,
+            februar: 65056,
+            mars: 15153,
+            april: 54972,
+            mai: 42775,
+            juni: 102458,
+            juli: 36787.68,
+            august: 0,
+            september: 0,
+            oktober: 0,
+            november: 0,
+            desember: 0,
+            monthlyGoal: 40000,
+            lastUpdated: "2025-09-03"
         };
 
-        const monthlyGoal = 40000;  // Your monthly target  
-        const yearlyGoal = monthlyGoal * 12;
+        let revenueData = {};
+        let monthlyGoal = 40000;
+        let yearlyGoal = 480000;
 
         const months = [
             'januar', 'februar', 'mars', 'april', 'mai', 'juni',
@@ -285,6 +314,43 @@
             'Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun',
             'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'
         ];
+
+        // Data loading functions
+        async function loadRevenueData() {
+            try {
+                const response = await fetch(DATA_SOURCE_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update global variables
+                monthlyGoal = data.monthlyGoal || 40000;
+                yearlyGoal = monthlyGoal * 12;
+                revenueData = { ...data };
+                
+                // Update data source display
+                document.getElementById('dataSourceUrl').textContent = new URL(DATA_SOURCE_URL).hostname;
+                document.getElementById('lastUpdated').textContent = data.lastUpdated || new Date().toISOString().split('T')[0];
+                
+                return true;
+            } catch (error) {
+                console.warn('Failed to load data from JSON file:', error);
+                console.log('Using fallback data...');
+                
+                // Use fallback data
+                revenueData = { ...fallbackData };
+                monthlyGoal = fallbackData.monthlyGoal;
+                yearlyGoal = monthlyGoal * 12;
+                
+                document.getElementById('dataSourceUrl').textContent = 'Fallback data (JSON file not accessible)';
+                document.getElementById('lastUpdated').textContent = fallbackData.lastUpdated;
+                
+                return false;
+            }
+        }
 
         // Utility functions
         function formatCurrency(amount) {
@@ -346,7 +412,7 @@
 
         function renderQuarterlyDashboard(revenueData) {
             const quarters = calculateQuarterlyStats(revenueData);
-            const total = Object.values(revenueData).reduce((sum, val) => sum + (val || 0), 0);
+            const total = Object.values(revenueData).filter(v => typeof v === 'number').reduce((sum, val) => sum + val, 0);
             const goalProgress = (total / yearlyGoal) * 100;
             const completedQuarters = quarters.filter(q => q.hasData);
             const bestQuarter = quarters.reduce((best, current) => 
@@ -400,14 +466,33 @@
                     </div>
                 </div>
             `).join('');
+        }
 
-            // Update timestamp
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleString('nb-NO');
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideLoadingAndShowContent() {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('quickStats').style.display = 'grid';
+            document.getElementById('quartersGrid').style.display = 'grid';
         }
 
         // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            renderQuarterlyDashboard(revenueData);
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const dataLoaded = await loadRevenueData();
+                if (!dataLoaded) {
+                    showError('Kunne ikke laste data fra JSON-fil. Bruker fallback-data.');
+                }
+                renderQuarterlyDashboard(revenueData);
+                hideLoadingAndShowContent();
+            } catch (error) {
+                console.error('Critical error initializing dashboard:', error);
+                showError('Kritisk feil ved initialisering av dashboard.');
+            }
         });
     </script>
 </body>

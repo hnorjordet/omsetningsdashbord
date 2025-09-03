@@ -46,6 +46,22 @@
             font-weight: 400;
         }
 
+        .loading {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #9ca3af;
+            margin: 40px 0;
+        }
+
+        .error {
+            background: #ef4444;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
         .stats-overview {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -284,6 +300,21 @@
         .trend-down { color: #ef4444; }
         .trend-stable { color: #f59e0b; }
 
+        .status-excellent { --accent-color: #10b981; }
+        .status-good { --accent-color: #3b82f6; }
+        .status-fair { --accent-color: #f59e0b; }
+        .status-poor { --accent-color: #ef4444; }
+
+        .data-source {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(30, 30, 30, 0.5);
+            border-radius: 8px;
+        }
+
         @media (max-width: 768px) {
             .title {
                 font-size: 2rem;
@@ -297,64 +328,6 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-
-        /* Status colors */
-        .status-excellent { --accent-color: #10b981; }
-        .status-good { --accent-color: #3b82f6; }
-        .status-fair { --accent-color: #f59e0b; }
-        .status-poor { --accent-color: #ef4444; }
-
-        .edit-mode {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #1f2937;
-            border: 1px solid #374151;
-            border-radius: 12px;
-            padding: 16px;
-            max-width: 300px;
-            max-height: 80vh;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-
-        .edit-mode.active {
-            display: block;
-        }
-
-        .edit-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 16px;
-            cursor: pointer;
-            font-weight: 600;
-            z-index: 1001;
-        }
-
-        .edit-input {
-            width: 100%;
-            background: #374151;
-            border: 1px solid #4b5563;
-            border-radius: 6px;
-            padding: 8px 12px;
-            color: #f3f4f6;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .edit-label {
-            display: block;
-            font-size: 12px;
-            color: #9ca3af;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
     </style>
 </head>
 <body>
@@ -364,7 +337,10 @@
             <p class="subtitle">Fullstendig oversikt over månedlig og kvartalsvis utvikling</p>
         </header>
 
-        <section class="stats-overview">
+        <div id="loadingMessage" class="loading">Laster data...</div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <section class="stats-overview" id="statsOverview" style="display: none;">
             <div class="stat-card">
                 <div class="stat-label">Total Omsetning</div>
                 <div class="stat-value" id="totalRevenue">0 kr</div>
@@ -387,47 +363,58 @@
             </div>
         </section>
 
-        <section class="months-grid" id="monthsGrid">
+        <section class="months-grid" id="monthsGrid" style="display: none;">
             <!-- Months will be populated by JavaScript -->
         </section>
 
-        <section class="quarterly-section">
+        <section class="quarterly-section" id="quarterlySection" style="display: none;">
             <h2 class="quarterly-title">📊 Kvartalsvis Oversikt</h2>
             <div class="quarterly-grid" id="quartersGrid">
                 <!-- Quarters will be populated by JavaScript -->
             </div>
         </section>
 
-        <section class="insights-section">
+        <section class="insights-section" id="insightsSection" style="display: none;">
             <h2 class="insights-title">📈 Innsikt & Analyse</h2>
             <div class="insights-grid" id="insightsGrid">
                 <!-- Insights will be populated by JavaScript -->
             </div>
         </section>
+
+        <div class="data-source">
+            Data hentet fra: <span id="dataSourceUrl">JSON fil</span> | 
+            Sist oppdatert: <span id="lastUpdated">-</span>
+        </div>
     </div>
 
     <script>
         // ==============================
-        // 📝 MONTHLY UPDATE - EDIT HERE!
+        // 🔗 DATA SOURCE CONFIGURATION
         // ==============================
-        // Just change the current month's 0 to your actual revenue amount
-        const revenueData = {
-            januar: 27910,      // ✅ 27,910 kr
-            februar: 65056,     // ✅ 65,056 kr  
-            mars: 15153,        // ✅ 15,153 kr
-            april: 54972,       // ✅ 54,972 kr
-            mai: 42775,         // ✅ 42,775 kr
-            juni: 102458,       // ✅ 102,458 kr
-            juli: 36787.68,        // ✅ 25,671 kr
-            august: 0,          // 🔄 ADD AUGUST REVENUE HERE
-            september: 0,       // 🔄 ADD SEPTEMBER REVENUE HERE  
-            oktober: 0,         // 🔄 ADD OCTOBER REVENUE HERE
-            november: 0,        // 🔄 ADD NOVEMBER REVENUE HERE
-            desember: 0         // 🔄 ADD DECEMBER REVENUE HERE
+        // Replace this URL with your public JSON file URL from Proton Drive or Google Drive
+        const DATA_SOURCE_URL = 'https://drive.proton.me/urls/RCCD9TFEMG#c7xP4mnQIv8w';
+        
+        // Fallback data in case the JSON file can't be loaded
+        const fallbackData = {
+            januar: 27910,
+            februar: 65056,
+            mars: 15153,
+            april: 54972,
+            mai: 42775,
+            juni: 102458,
+            juli: 36787.68,
+            august: 0,
+            september: 0,
+            oktober: 0,
+            november: 0,
+            desember: 0,
+            monthlyGoal: 40000,
+            lastUpdated: "2025-09-03"
         };
 
-        const monthlyGoal = 40000;  // Your monthly target
-        const yearlyGoal = monthlyGoal * 12;
+        let revenueData = {};
+        let monthlyGoal = 40000;
+        let yearlyGoal = 480000;
 
         // Month names and data
         const months = [
@@ -440,7 +427,44 @@
             'Juli', 'August', 'September', 'Oktober', 'November', 'Desember'
         ];
 
-        // Utility functions
+        // Data loading functions
+        async function loadRevenueData() {
+            try {
+                const response = await fetch(DATA_SOURCE_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update global variables
+                monthlyGoal = data.monthlyGoal || 40000;
+                yearlyGoal = monthlyGoal * 12;
+                revenueData = { ...data };
+                
+                // Update data source display
+                document.getElementById('dataSourceUrl').textContent = new URL(DATA_SOURCE_URL).hostname;
+                document.getElementById('lastUpdated').textContent = data.lastUpdated || new Date().toISOString().split('T')[0];
+                
+                return true;
+            } catch (error) {
+                console.warn('Failed to load data from JSON file:', error);
+                console.log('Using fallback data...');
+                
+                // Use fallback data
+                revenueData = { ...fallbackData };
+                monthlyGoal = fallbackData.monthlyGoal;
+                yearlyGoal = monthlyGoal * 12;
+                
+                document.getElementById('dataSourceUrl').textContent = 'Fallback data (JSON file not accessible)';
+                document.getElementById('lastUpdated').textContent = fallbackData.lastUpdated;
+                
+                return false;
+            }
+        }
+
+        // Utility functions (same as before)
         function formatCurrency(amount) {
             return new Intl.NumberFormat('nb-NO', {
                 style: 'currency',
@@ -464,7 +488,7 @@
         }
 
         function calculateStats(revenueData) {
-            const values = Object.values(revenueData);
+            const values = Object.values(revenueData).filter(v => typeof v === 'number');
             const nonZeroValues = values.filter(v => v > 0);
             
             const total = values.reduce((sum, val) => sum + val, 0);
@@ -476,13 +500,13 @@
             let bestMonth = { name: '-', amount: 0, index: -1 };
             let worstMonth = { name: '-', amount: Infinity, index: -1 };
             
-            nonZeroValues.forEach((amount, idx) => {
-                const actualIndex = values.findIndex(v => v === amount && values.indexOf(v) >= idx);
+            months.forEach((month, idx) => {
+                const amount = revenueData[month] || 0;
                 if (amount > bestMonth.amount) {
-                    bestMonth = { name: monthNamesDisplay[actualIndex], amount, index: actualIndex };
+                    bestMonth = { name: monthNamesDisplay[idx], amount, index: idx };
                 }
-                if (amount < worstMonth.amount && actualIndex <= currentMonthIndex) {
-                    worstMonth = { name: monthNamesDisplay[actualIndex], amount, index: actualIndex };
+                if (amount < worstMonth.amount && amount > 0 && idx <= currentMonthIndex) {
+                    worstMonth = { name: monthNamesDisplay[idx], amount, index: idx };
                 }
             });
 
@@ -511,7 +535,6 @@
             document.getElementById('goalProgress').textContent = Math.round(stats.goalProgress) + '%';
             
             // Update change indicators
-            const totalChange = document.getElementById('totalChange');
             const goalStatus = document.getElementById('goalStatus');
             
             if (stats.projectedAnnual > yearlyGoal) {
@@ -531,7 +554,7 @@
             const currentMonth = new Date().getMonth();
             
             grid.innerHTML = months.map((month, index) => {
-                const amount = revenueData[month];
+                const amount = revenueData[month] || 0;
                 const status = getMonthStatus(amount, monthlyGoal);
                 const isCurrentMonth = index === currentMonth;
                 const isFutureMonth = index > currentMonth;
@@ -572,10 +595,10 @@
 
             grid.innerHTML = quarters.map(quarter => {
                 const total = quarter.months.reduce((sum, monthIdx) => {
-                    return sum + revenueData[months[monthIdx]];
+                    return sum + (revenueData[months[monthIdx]] || 0);
                 }, 0);
                 const average = total / 3;
-                const hasData = quarter.months.some(monthIdx => revenueData[months[monthIdx]] > 0);
+                const hasData = quarter.months.some(monthIdx => (revenueData[months[monthIdx]] || 0) > 0);
                 const quarterGoal = monthlyGoal * 3;
                 const achievement = (total / quarterGoal) * 100;
 
@@ -594,7 +617,7 @@
                         </div>
                         <div class="quarter-months">
                             ${quarter.months.map(monthIdx => {
-                                const amount = revenueData[months[monthIdx]];
+                                const amount = revenueData[months[monthIdx]] || 0;
                                 return `
                                     <div class="quarter-month">
                                         <div style="font-size: 0.7rem; color: #9ca3af; margin-bottom: 4px;">
@@ -615,7 +638,7 @@
         function renderInsights(revenueData) {
             const grid = document.getElementById('insightsGrid');
             const stats = calculateStats(revenueData);
-            const values = Object.values(revenueData).filter(v => v > 0);
+            const values = months.map(month => revenueData[month] || 0).filter(v => v > 0);
             
             // Calculate trends
             const lastThreeMonths = values.slice(-3);
@@ -657,7 +680,7 @@
                 {
                     icon: '🏆',
                     label: 'Best vs Verst',
-                    value: `${Math.round((stats.bestMonth.amount / stats.worstMonth.amount) * 100)}% forskjell`
+                    value: stats.worstMonth.amount > 0 ? `${Math.round((stats.bestMonth.amount / stats.worstMonth.amount) * 100)}% forskjell` : 'Ikke tilgjengelig'
                 }
             ];
 
@@ -672,61 +695,45 @@
             `).join('');
         }
 
-        // Notion API functions
-        async function fetchNotionData() {
-            try {
-                const response = await fetch(`https://api.notion.com/v1/databases/${NOTION_CONFIG.databaseId}/query`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${NOTION_CONFIG.token}`,
-                        'Content-Type': 'application/json',
-                        'Notion-Version': '2022-06-28'
-                    },
-                    body: JSON.stringify({})
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                return parseNotionData(data);
-            } catch (error) {
-                console.error('Error fetching Notion data:', error);
-                return null;
-            }
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
         }
 
-        function parseNotionData(notionResponse) {
-            const revenueData = {};
-            
-            notionResponse.results.forEach(page => {
-                const monthProperty = page.properties['Måned'] || page.properties['Month'];
-                const revenueProperty = page.properties['Omsetning'] || page.properties['Revenue'];
-                
-                if (monthProperty && revenueProperty) {
-                    const month = monthProperty.title[0]?.text?.content?.toLowerCase();
-                    const revenue = revenueProperty.number || 0;
-                    
-                    if (month && months.includes(month)) {
-                        revenueData[month] = revenue;
-                    }
-                }
-            });
-
-            return revenueData;
+        function hideLoadingAndShowContent() {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('statsOverview').style.display = 'grid';
+            document.getElementById('monthsGrid').style.display = 'grid';
+            document.getElementById('quarterlySection').style.display = 'block';
+            document.getElementById('insightsSection').style.display = 'block';
         }
 
         function renderDashboard() {
-            renderOverviewStats(revenueData);
-            renderMonths(revenueData);
-            renderQuarters(revenueData);
-            renderInsights(revenueData);
+            try {
+                renderOverviewStats(revenueData);
+                renderMonths(revenueData);
+                renderQuarters(revenueData);
+                renderInsights(revenueData);
+                hideLoadingAndShowContent();
+            } catch (error) {
+                console.error('Error rendering dashboard:', error);
+                showError('Feil ved visning av dashboard. Sjekk konsollen for detaljer.');
+            }
         }
 
         // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            renderDashboard();
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const dataLoaded = await loadRevenueData();
+                if (!dataLoaded) {
+                    showError('Kunne ikke laste data fra JSON-fil. Bruker fallback-data.');
+                }
+                renderDashboard();
+            } catch (error) {
+                console.error('Critical error initializing dashboard:', error);
+                showError('Kritisk feil ved initialisering av dashboard.');
+            }
         });
     </script>
 </body>
