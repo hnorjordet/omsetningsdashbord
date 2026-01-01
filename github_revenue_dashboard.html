@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omsetning Dashboard 2025</title>
+    <title>Omsetning Dashboard 2026</title>
     <style>
         * {
             margin: 0;
@@ -212,7 +212,7 @@
 
         .quarter-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
@@ -333,7 +333,7 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1 class="title">💰 Omsetning Dashboard 2025</h1>
+            <h1 class="title">💰 Omsetning Dashboard 2026</h1>
             <p class="subtitle">Fullstendig oversikt over månedlig og kvartalsvis utvikling</p>
         </header>
 
@@ -344,7 +344,7 @@
             <div class="stat-card">
                 <div class="stat-label">Total Omsetning</div>
                 <div class="stat-value" id="totalRevenue">0 kr</div>
-                <div class="stat-change" id="totalChange">+0% fra i fjor</div>
+                <div class="stat-change" id="totalChange">Ingen data fra i fjor</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Månedlig Snitt</div>
@@ -396,25 +396,27 @@
         
         // Fallback data in case the JSON file can't be loaded
         const fallbackData = {
-            januar: 27910,
-            februar: 65056,
-            mars: 15153,
-            april: 54972,
-            mai: 42775,
-            juni: 102458,
-            juli: 36787.68,
+            januar: 0,
+            februar: 0,
+            mars: 0,
+            april: 0,
+            mai: 0,
+            juni: 0,
+            juli: 0,
             august: 0,
             september: 0,
             oktober: 0,
             november: 0,
             desember: 0,
             monthlyGoal: 40000,
-            lastUpdated: "2025-09-03"
+            previousYearTotal: null,
+            lastUpdated: "2026-01-01"
         };
 
         let revenueData = {};
         let monthlyGoal = 40000;
         let yearlyGoal = 480000;
+        let previousYearTotal = null;
 
         // Month names and data
         const months = [
@@ -441,6 +443,7 @@
                 // Update global variables
                 monthlyGoal = data.monthlyGoal || 40000;
                 yearlyGoal = monthlyGoal * 12;
+                previousYearTotal = data.previousYearTotal || null;
                 revenueData = { ...data };
                 
                 // Update data source display
@@ -456,6 +459,7 @@
                 revenueData = { ...fallbackData };
                 monthlyGoal = fallbackData.monthlyGoal;
                 yearlyGoal = monthlyGoal * 12;
+                previousYearTotal = fallbackData.previousYearTotal;
                 
                 document.getElementById('dataSourceUrl').textContent = 'Fallback data (JSON file not accessible)';
                 document.getElementById('lastUpdated').textContent = fallbackData.lastUpdated;
@@ -464,7 +468,7 @@
             }
         }
 
-        // Utility functions (same as before)
+        // Utility functions
         function formatCurrency(amount) {
             return new Intl.NumberFormat('nb-NO', {
                 style: 'currency',
@@ -528,13 +532,32 @@
         function renderOverviewStats(revenueData) {
             const stats = calculateStats(revenueData);
             
+            // Update total revenue
             document.getElementById('totalRevenue').textContent = formatCurrency(stats.total);
+            
+            // ==============================
+            // 📊 YEAR-OVER-YEAR COMPARISON
+            // ==============================
+            const changeElement = document.getElementById('totalChange');
+            
+            if (previousYearTotal && previousYearTotal > 0) {
+                const yearOverYearChange = ((stats.total - previousYearTotal) / previousYearTotal) * 100;
+                const isPositive = yearOverYearChange >= 0;
+                
+                changeElement.textContent = `${isPositive ? '+' : ''}${yearOverYearChange.toFixed(1)}% fra i fjor`;
+                changeElement.className = isPositive ? 'stat-change positive' : 'stat-change negative';
+            } else {
+                changeElement.textContent = 'Ingen data fra i fjor';
+                changeElement.className = 'stat-change neutral';
+            }
+            
+            // Update other stats
             document.getElementById('avgRevenue').textContent = formatCurrency(stats.average);
             document.getElementById('bestMonth').textContent = stats.bestMonth.name;
             document.getElementById('bestAmount').textContent = formatCurrency(stats.bestMonth.amount);
             document.getElementById('goalProgress').textContent = Math.round(stats.goalProgress) + '%';
             
-            // Update change indicators
+            // Update goal status
             const goalStatus = document.getElementById('goalStatus');
             
             if (stats.projectedAnnual > yearlyGoal) {
@@ -587,10 +610,10 @@
         function renderQuarters(revenueData) {
             const grid = document.getElementById('quartersGrid');
             const quarters = [
-                { name: 'Q1 2025', months: [0, 1, 2], label: 'Jan-Mar' },
-                { name: 'Q2 2025', months: [3, 4, 5], label: 'Apr-Jun' },
-                { name: 'Q3 2025', months: [6, 7, 8], label: 'Jul-Sep' },
-                { name: 'Q4 2025', months: [9, 10, 11], label: 'Okt-Des' }
+                { name: 'Q1 2026', months: [0, 1, 2], label: 'Jan-Mar' },
+                { name: 'Q2 2026', months: [3, 4, 5], label: 'Apr-Jun' },
+                { name: 'Q3 2026', months: [6, 7, 8], label: 'Jul-Sep' },
+                { name: 'Q4 2026', months: [9, 10, 11], label: 'Okt-Des' }
             ];
 
             grid.innerHTML = quarters.map(quarter => {
