@@ -391,7 +391,6 @@
         // ==============================
         // 🔗 DATA SOURCE CONFIGURATION
         // ==============================
-        // Replace this URL with your public JSON file URL from Proton Drive or Google Drive
         const DATA_SOURCE_URL = 'https://raw.githubusercontent.com/hnorjordet/omsetningsdashbord/refs/heads/main/revenue_data.json';
         
         // Fallback data in case the JSON file can't be loaded
@@ -492,7 +491,10 @@
         }
 
         function calculateStats(revenueData) {
-            const values = Object.values(revenueData).filter(v => typeof v === 'number');
+            // ==============================
+            // 🔧 FIX: Kun tell månedsverdier, ikke previousYearTotal eller monthlyGoal
+            // ==============================
+            const values = months.map(month => revenueData[month] || 0);
             const nonZeroValues = values.filter(v => v > 0);
             
             const total = values.reduce((sum, val) => sum + val, 0);
