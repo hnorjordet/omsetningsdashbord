@@ -11,6 +11,7 @@
   "oktober": 83989.14,
   "november": 45885.32,
   "desember": 7862.28,
+  "previousYearTotal": 345000,  // <-- LEGG TIL når 2025 er ferdig
   "monthlyGoal": 40000,
   "lastUpdated": "31.12.2025"
 }
