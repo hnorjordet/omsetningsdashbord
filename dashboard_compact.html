@@ -280,25 +280,25 @@
         // ==============================
         // 🔗 DATA SOURCE CONFIGURATION
         // ==============================
-        // Replace this URL with your public JSON file URL from Proton Drive or Google Drive
         const DATA_SOURCE_URL = 'https://raw.githubusercontent.com/hnorjordet/omsetningsdashbord/refs/heads/main/revenue_data.json';
         
         // Fallback data in case the JSON file can't be loaded
         const fallbackData = {
-            januar: 27910,
-            februar: 65056,
-            mars: 15153,
-            april: 54972,
-            mai: 42775,
-            juni: 102458,
-            juli: 36787.68,
+            januar: 0,
+            februar: 0,
+            mars: 0,
+            april: 0,
+            mai: 0,
+            juni: 0,
+            juli: 0,
             august: 0,
             september: 0,
             oktober: 0,
             november: 0,
             desember: 0,
             monthlyGoal: 40000,
-            lastUpdated: "2025-09-03"
+            previousYearTotal: null,
+            lastUpdated: "2026-01-01"
         };
 
         let revenueData = {};
@@ -412,7 +412,12 @@
 
         function renderQuarterlyDashboard(revenueData) {
             const quarters = calculateQuarterlyStats(revenueData);
-            const total = Object.values(revenueData).filter(v => typeof v === 'number').reduce((sum, val) => sum + val, 0);
+            
+            // ==============================
+            // 🔧 FIX: Kun tell månedsverdier
+            // ==============================
+            const total = months.reduce((sum, month) => sum + (revenueData[month] || 0), 0);
+            
             const goalProgress = (total / yearlyGoal) * 100;
             const completedQuarters = quarters.filter(q => q.hasData);
             const bestQuarter = quarters.reduce((best, current) => 
@@ -433,7 +438,7 @@
                 <div class="quarter-card ${quarter.status.class}">
                     <div class="quarter-header">
                         <div>
-                            <div class="quarter-name">${quarter.name} 2025</div>
+                            <div class="quarter-name">${quarter.name} 2026</div>
                             <div class="quarter-period">${quarter.label}</div>
                         </div>
                         <div class="quarter-status ${quarter.status.class}">
